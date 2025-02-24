@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/quinntas/go-fiber-template/modules/shared"
 	"log"
 	"time"
 )
@@ -44,7 +45,7 @@ func main() {
 
 	app.Use(logger.New())
 
-	app.Get("/metrics", monitor.New(monitor.Config{Title: "MyService Metrics Page"}))
+	app.Get("/metrics", monitor.New(monitor.Config{Title: "Go Fiber Template"}))
 
 	app.Use(recover.New())
 
@@ -52,11 +53,7 @@ func main() {
 
 	v1Router := app.Group("/api/v1")
 
-	v1Router.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "ok",
-		})
-	})
+	shared.InitRouter(v1Router)
 
 	userRouter := v1Router.Group("/user")
 
