@@ -2,7 +2,10 @@ module github.com/quinntas/go-fiber-template
 
 go 1.24.0
 
-require github.com/gofiber/fiber/v2 v2.52.6
+require (
+	github.com/gofiber/fiber/v2 v2.52.6
+	github.com/joho/godotenv v1.5.1
+)
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect

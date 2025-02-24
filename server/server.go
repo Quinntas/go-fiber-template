@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -11,24 +11,20 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"github.com/quinntas/go-fiber-template/modules/shared"
-	"log"
+	"os"
 	"time"
 )
 
-func main() {
-	app := fiber.New(fiber.Config{
-		AppName:       "go-fiber-template",
-		CaseSensitive: false,
-		ServerHeader:  "go-fiber-template",
-	})
+func setupMiddlewares(app *fiber.App) {
+	app.Use(cors.New())
+	app.Use(helmet.New())
+	app.Use(logger.New())
+	app.Use(recover.New())
+	app.Use(requestid.New())
 
 	app.Use(compress.New(compress.Config{
 		Level: compress.LevelBestSpeed,
 	}))
-
-	app.Use(cors.New())
-	app.Use(helmet.New())
 
 	app.Use(limiter.New(limiter.Config{
 		Next: func(c *fiber.Ctx) bool {
@@ -43,19 +39,40 @@ func main() {
 		},
 	}))
 
-	app.Use(logger.New())
+	app.Get("/metrics", monitor.New())
+}
 
-	app.Get("/metrics", monitor.New(monitor.Config{Title: "Go Fiber Template"}))
+func Create() *fiber.App {
+	app := fiber.New(fiber.Config{
+		AppName:       "go-fiber-template",
+		ServerHeader:  "go-fiber-template",
+		CaseSensitive: false,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		},
+	})
 
-	app.Use(recover.New())
+	setupMiddlewares(app)
 
-	app.Use(requestid.New())
+	return app
+}
 
-	v1Router := app.Group("/api/v1")
+func Listen(app *fiber.App) error {
+	// 404 Handler
+	app.Use(func(c *fiber.Ctx) error {
+		return c.SendStatus(404)
+	})
 
-	shared.InitRouter(v1Router)
+	serverHost := os.Getenv("HOST")
+	serverPort := os.Getenv("PORT")
 
-	userRouter := v1Router.Group("/user")
+	return app.Listen(fmt.Sprintf("%s:%s", serverHost, serverPort))
+}
+
+/*
+userRouter := v1Router.Group("/user")
 
 	userRouter.Use(func(c *fiber.Ctx) error {
 		c.Locals("user", "admin")
@@ -74,9 +91,4 @@ func main() {
 			"message": "ok",
 		})
 	})
-
-	err := app.Listen(":3000")
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+*/
