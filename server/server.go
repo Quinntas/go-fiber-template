@@ -60,9 +60,10 @@ func Create() *fiber.App {
 }
 
 func Listen(app *fiber.App) error {
-	// 404 Handler
 	app.Use(func(c *fiber.Ctx) error {
-		return c.SendStatus(404)
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "not found",
+		})
 	})
 
 	serverHost := os.Getenv("HOST")
